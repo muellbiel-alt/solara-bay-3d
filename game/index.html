@@ -1,19 +1,120 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-type="software">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Block Dodger</title>
+<meta name="page-type" content="software">
+<meta name="site-kind" content="gaming">
+<title>Solara Bay 3D: Heatline — open-world crime at golden hour</title>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #f2a35e;
+    font-family: "Arial Black", "Segoe UI", Arial, sans-serif; }
   #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  /* Read aloud, never shown: the status line screen readers announce. */
+  #hud, #menus { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  #menus { z-index: 8; }
   #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .hud-top { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 12px 16px; }
+  .hud-stars { font-size: 30px; letter-spacing: 3px; color: rgba(255,255,255,0.35); text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+  .hud-stars .on { color: #ffc21c; }
+  .hud-stars.hot .on { color: #ff3b30; }
+  .hud-cash { font-size: 26px; color: #fff; background: rgba(12,20,14,0.72); border: 2px solid #ffc21c;
+    padding: 4px 14px; border-radius: 6px; text-shadow: 0 1px 2px #000; }
+  .hud-objective { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); text-align: center;
+    background: rgba(12,16,26,0.78); border-left: 5px solid #ffc21c; color: #fff; padding: 7px 16px; border-radius: 4px;
+    max-width: 560px; }
+  .hud-objective b { display: block; font-size: 15px; letter-spacing: 1px; color: #ffc21c; }
+  .hud-objective span { font-size: 12px; font-family: "Segoe UI", Arial, sans-serif; }
+  .hud-vitals { position: absolute; left: 16px; bottom: 148px; width: 230px; }
+  .hud-bar { position: relative; height: 18px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.5);
+    margin-top: 6px; border-radius: 3px; overflow: hidden; }
+  .hud-bar i { display: block; height: 100%; background: #3fae5a; }
+  .hud-bar b { position: absolute; inset: 0; font-size: 11px; color: #fff; line-height: 18px; padding-left: 6px; letter-spacing: 1px; }
+  #hud-armor i { background: #2a7fd8; }
+  .hud-minimap { position: absolute; top: 64px; right: 16px; width: 188px; height: 188px; }
+  .hud-minimap canvas { width: 188px; height: 188px; border-radius: 50%; }
+  .hud-maplabel { text-align: center; color: #fff; font-size: 12px; letter-spacing: 2px; margin-top: 4px;
+    text-shadow: 0 1px 3px #000; background: rgba(0,0,0,0.5); border-radius: 3px; padding: 2px 0; }
+  .hud-weapons { position: absolute; left: 16px; bottom: 16px; }
+  .hud-slots { display: flex; gap: 6px; }
+  .slot { width: 108px; background: rgba(12,16,26,0.75); border: 2px solid rgba(255,255,255,0.35);
+    color: #fff; padding: 5px 7px; border-radius: 4px; }
+  .slot.active { border-color: #ffc21c; background: rgba(60,40,0,0.85); }
+  .slot b { color: #ffc21c; margin-right: 5px; }
+  .slot span { font-size: 11px; display: block; font-family: "Segoe UI", Arial, sans-serif; }
+  .slot em { font-size: 11px; color: #9be8d8; font-style: normal; }
+  .hud-crew { display: flex; gap: 6px; margin-top: 6px; }
+  .ability { width: 108px; background: rgba(12,16,26,0.75); border: 1px solid rgba(255,255,255,0.35);
+    color: #fff; padding: 5px 7px; border-radius: 4px; }
+  .ability.active { border-color: #2ad8ff; }
+  .ability b { font-size: 10px; display: block; }
+  .ability i { display: block; height: 5px; background: #2ad8ff; margin: 4px 0 2px; }
+  .ability span { font-size: 10px; color: #ffe9a8; font-family: "Segoe UI", Arial, sans-serif; }
+  .hud-right { position: absolute; right: 16px; bottom: 16px; text-align: right; }
+  .hud-speed b { font-size: 52px; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.7); line-height: 1; }
+  .hud-speed span { display: block; color: #ffe9a8; font-size: 12px; letter-spacing: 1px; text-shadow: 0 1px 3px #000; }
+  .hud-radio { color: #fff; background: rgba(12,16,26,0.72); display: inline-block; padding: 4px 10px;
+    border-radius: 4px; font-size: 13px; margin-top: 6px; border: 1px solid #ff4fa3; }
+  .hud-dispatch { position: absolute; left: 16px; top: 96px; width: 340px; font-family: "Segoe UI", Arial, sans-serif; }
+  .hud-dispatch div { background: rgba(20,10,10,0.72); color: #ffd7d7; border-left: 4px solid #ff3b30;
+    font-size: 12px; padding: 5px 9px; margin-top: 4px; border-radius: 3px; }
+  .hud-flash { position: absolute; top: 42%; left: 50%; transform: translateX(-50%); color: #ffc21c;
+    font-size: 26px; letter-spacing: 2px; text-shadow: 0 2px 10px #000; opacity: 0; transition: opacity 0.4s; white-space: nowrap; }
+  .hud-prompt { position: absolute; bottom: 210px; left: 50%; transform: translateX(-50%); color: #fff;
+    background: rgba(12,16,26,0.8); border: 2px solid #ffc21c; padding: 7px 16px; border-radius: 4px; font-size: 14px; }
+  .hud-wheel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; gap: 10px; }
+  .wheel-item { width: 130px; text-align: center; background: rgba(12,16,26,0.88); border: 2px solid rgba(255,255,255,0.4);
+    color: #fff; padding: 12px 8px; border-radius: 6px; }
+  .wheel-item.active { border-color: #ffc21c; background: rgba(60,40,0,0.9); }
+  .wheel-item b { color: #ffc21c; font-size: 20px; display: block; }
+  .wheel-item span { font-size: 12px; display: block; font-family: "Segoe UI", Arial, sans-serif; }
+  .wheel-item em { font-size: 11px; color: #9be8d8; font-style: normal; }
+  .menu-title { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-start;
+    pointer-events: none; }
+  .title-sky { text-align: center; padding-top: 16px; }
+  .title-sky h1 { margin: 0; font-size: 62px; letter-spacing: 4px; color: #fff;
+    text-shadow: 0 3px 0 #ff5a2a, 0 6px 22px rgba(0,0,0,0.55); }
+  .title-sky h1 span { color: #ffc21c; }
+  .tagline { margin: 4px 0 12px; color: #fff; font-size: 15px; letter-spacing: 3px; text-shadow: 0 2px 6px #000;
+    font-family: "Segoe UI", Arial, sans-serif; }
+  .title-buttons { display: flex; gap: 10px; justify-content: center; pointer-events: auto; }
+  .title-buttons button, .menu-panel button { font-family: inherit; font-size: 16px; letter-spacing: 1px;
+    background: #ffc21c; color: #1c2733; border: none; padding: 10px 22px; border-radius: 5px; cursor: pointer;
+    box-shadow: 0 3px 0 #a86f00; }
+  .title-buttons button:hover { background: #ffd94d; }
+  .title-foot { display: flex; justify-content: center; gap: 26px; padding: 10px 18px 0; color: #fff; font-size: 12px;
+    font-family: "Segoe UI", Arial, sans-serif; text-shadow: 0 1px 4px #000; }
+  .menu-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 620px;
+    max-height: 86%; overflow: auto; background: rgba(14,18,30,0.94); color: #fff; padding: 22px 26px;
+    border: 2px solid #ffc21c; border-radius: 8px; pointer-events: auto; font-family: "Segoe UI", Arial, sans-serif; }
+  .menu-panel h2 { margin: 0 0 6px; font-family: "Arial Black", Arial, sans-serif; letter-spacing: 1px; color: #ffc21c; }
+  .menu-panel h3 { margin: 14px 0 6px; color: #9be8d8; }
+  .panel-sub { color: #cfd8e8; font-size: 13px; }
+  .slot-row, .shop-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.14); }
+  .slot-row span, .shop-row span { flex: 1; }
+  .shop-row b { color: #ffc21c; }
+  .shop-row em { color: #9be8d8; font-style: normal; }
+  .menu-panel button { font-size: 13px; padding: 6px 14px; }
+  .menu-results { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .results-card { width: 520px; background: rgba(14,18,30,0.92); border: 2px solid #ffc21c; border-radius: 10px;
+    color: #fff; padding: 24px 28px; text-align: center; pointer-events: auto; }
+  .results-kicker { color: #2ad8ff; letter-spacing: 4px; margin: 0; font-size: 13px; }
+  .results-card h2 { margin: 6px 0; font-size: 30px; letter-spacing: 1px; }
+  .results-pay { font-size: 44px; color: #3fae5a; margin: 4px 0 12px; }
+  .results-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: left;
+    font-family: "Segoe UI", Arial, sans-serif; font-size: 14px; }
+  .results-rows div { background: rgba(255,255,255,0.08); padding: 8px 12px; border-radius: 4px;
+    display: flex; justify-content: space-between; }
+  .results-progress { font-size: 20px; letter-spacing: 6px; margin: 14px 0; color: #ffc21c; }
+  .results-progress i { font-style: normal; color: rgba(255,255,255,0.35); }
+  .results-progress i.done { color: #ffc21c; }
 </style>
 </head>
 <body>
-<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
+<canvas id="game" aria-label="Solara Bay 3D: drive, carjack, escape the police and finish ten story missions"></canvas>
+<div id="hud"></div>
+<div id="menus"></div>
 <p id="status" role="status" aria-live="polite"></p>
+<script src="./vendor/three.min.js"></script>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>
